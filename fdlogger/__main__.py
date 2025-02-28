@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#fdlogger/__main__.py
 """
 K6GTE Field Day logger
 Email: michael.bridak@gmail.com
@@ -140,10 +141,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.callsign_entry.textEdited.connect(self.calltest)
         self.class_entry.textEdited.connect(self.classtest)
         self.section_entry.textEdited.connect(self.sectiontest)
+        self.rstin_entry.textEdited.connect(self.rstintest)
+        self.rstout_entry.textEdited.connect(self.rstouttest)
+        self.notes_entry.textEdited.connect(self.notestest)
+        self.freq_entry.textEdited.connect(self.freqtest)
+
         self.callsign_entry.returnPressed.connect(self.log_contact)
         self.chat_entry.returnPressed.connect(self.send_chat)
         self.class_entry.returnPressed.connect(self.log_contact)
         self.section_entry.returnPressed.connect(self.log_contact)
+        self.rstin_entry.returnPressed.connect(self.log_contact)
+        self.rstout_entry.returnPressed.connect(self.log_contact)
+        self.freq_entry.returnPressed.connect(self.log_contact)
+        self.notes_entry.returnPressed.connect(self.log_contact)
         self.mycallEntry.textEdited.connect(self.changemycall)
         self.myclassEntry.textEdited.connect(self.changemyclass)
         self.mysectionEntry.textEdited.connect(self.changemysection)
@@ -202,6 +212,8 @@ class MainWindow(QtWidgets.QMainWindow):
             "nickname": "",
             "error": "",
             "distance": "",
+            "rstin": "",
+            "rstout" : ""
         }
         self.preference = {
             "mycall": "",
@@ -261,7 +273,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.udp_socket = QUdpSocket()
         self.udp_socket.bind(QHostAddress.LocalHost, 2237)
         self.udp_socket.readyRead.connect(self.on_udp_socket_ready_read)
-
+        
     def get_opon(self) -> None:
         """
         Ctrl+O Open the OPON dialog.
@@ -797,6 +809,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 call,
                 hisclass,
                 hissect,
+                "-",
+                "-",
+                "",
                 the_dt,
                 freq,
                 band,
@@ -1000,6 +1015,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 newfreq / 1000
             )
             self.setband(str(self.getband(str(newfreq))))
+            #self.freq_entry.setText(str(self.getband(str(newfreq))) / 1000)
+            print(self.freq_entry.text())
 
     def fakefreq(self, band, mode):
         """
@@ -1013,6 +1030,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return 0
         freqtoreturn = self.fakefreqs[band][modes[mode]]
         logger.info("fakefreq: returning:%s", freqtoreturn)
+
         return freqtoreturn
 
     @staticmethod
@@ -1153,9 +1171,15 @@ class MainWindow(QtWidgets.QMainWindow):
         if event_key == Qt.Key_Tab:
             if self.section_entry.hasFocus():
                 logger.info("From section")
-                self.callsign_entry.setFocus()
-                self.callsign_entry.deselect()
-                self.callsign_entry.end(False)
+                self.freq_entry.setFocus()
+                self.freq_entry.deselect()
+                self.freq_entry.end(False)
+                return
+            if self.freq_entry.hasFocus():
+                logger.info("From Frequency")
+                self.rstin_entry.setFocus()
+                self.rstin_entry.deselect()
+                self.rstin_entry.end(False)
                 return
             if self.class_entry.hasFocus():
                 logger.info("From class")
@@ -1163,6 +1187,26 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.section_entry.deselect()
                 self.section_entry.end(False)
                 return
+
+            if self.rstin_entry.hasFocus():
+                logger.info("From RST IN")
+                self.rstout_entry.setFocus()
+                self.rstout_entry.deselect()
+                self.rstout_entry.end(False)
+                return
+            if self.rstout_entry.hasFocus():
+                logger.info("From RST OUT")
+                self.notes_entry.setFocus()
+                self.notes_entry.deselect()
+                self.notes_entry.end(False)
+                return
+            if self.notes_entry.hasFocus():
+                logger.info("From Section")
+                self.callsign_entry.setFocus()
+                self.callsign_entry.deselect()
+                self.callsign_entry.end(False)
+                return
+
             if self.callsign_entry.hasFocus():
                 logger.info("From callsign")
                 _thethread = threading.Thread(
@@ -1367,17 +1411,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.class_entry.clear()
         self.section_entry.clear()
         self.callsign_entry.setFocus()
+        #self.rstin_entry.clear()
+        #self.rstout_entry.clear()
+        self.notes_entry.clear()
 
     def changeband(self):
         """change band"""
+        
         if self.band != self.band_selector.currentText():
             self.band = self.band_selector.currentText()
             if self.cat_control is not None:
-                self.cat_control.set_vfo(
-                    int(float(self.fakefreq(self.band, self.mode)) * 1000)
-                )
+                vfo = int(float(self.fakefreq(self.band, self.mode)) * 1000)
+                self.freq_entry.setText(str(vfo))
+                self.cat_control.set_vfo(vfo)
             self.send_status_udp()
-
+            #self.freq_entry.setText(str(int(float(self.fakefreq(self.band, self.mode)))))
+        if len(self.freq_entry.text()) == 0:
+            print(self.freq_entry.text())
+        self.freq_entry.setText(str(int(float(self.fakefreq(self.band, self.mode)))))
+        
     def changemode(self):
         """change mode"""
         if self.mode != self.mode_selector.currentText():
@@ -1522,19 +1574,85 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def sectiontest(self):
         """
-        Test and strip section of bad characters, advance to next input field if space pressed.
+        Test and strip class of bad characters, advance to next input field if space pressed.
         """
         text = self.section_entry.text()
         if len(text):
             if text[-1] == " ":
                 self.section_entry.setText(text.strip())
-                self.callsign_entry.setFocus()
-                self.callsign_entry.deselect()
+                self.rstin_entry.setFocus()
+                self.rstin_entry.deselect()
             else:
                 washere = self.section_entry.cursorPosition()
-                cleaned = "".join(ch for ch in text if ch.isalpha()).upper()
+                cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
                 self.section_entry.setText(cleaned)
                 self.section_entry.setCursorPosition(washere)
+
+    def freqtest(self):
+        """
+        Test and strip class of bad characters, advance to next input field if space pressed.
+        """
+        text = self.freq_entry.text()
+        if len(text):
+            if text[-1] == " ":
+                self.freq_entry.setText(text.strip())
+                self.rstin_entry.setFocus()
+                self.rstin_entry.deselect()
+            else:
+                washere = self.freq_entry.cursorPosition()
+                cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
+                self.freq_entry.setText(cleaned)
+                self.freq_entry.setCursorPosition(washere)
+
+
+    def rstintest(self):
+        """
+        Test and strip class of bad characters, advance to next input field if space pressed.
+        """
+        text = self.rstin_entry.text()
+        if len(text):
+            if text[-1] == " ":
+                self.rstin_entry.setText(text.strip())
+                self.rstout_entry.setFocus()
+                self.rstout_entry.deselect()
+            else:
+                washere = self.rstin_entry.cursorPosition()
+                cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
+                self.rstin_entry.setText(cleaned)
+                self.rstin_entry.setCursorPosition(washere)
+
+    def rstouttest(self):
+        """
+        Test and strip class of bad characters, advance to next input field if space pressed.
+        """
+        text = self.rstout_entry.text()
+        if len(text):
+            if text[-1] == " ":
+                self.rstout_entry.setText(text.strip())
+                self.notes_entry.setFocus()
+                self.notes_entry.deselect()
+            else:
+                washere = self.rstout_entry.cursorPosition()
+                cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
+                self.rstout_entry.setText(cleaned)
+                self.rstout_entry.setCursorPosition(washere)
+
+    def notestest(self):
+        """
+        Test and strip section of bad characters, advance to next input field if space pressed.
+        """
+        text = self.notes_entry.text()
+        if len(text):
+            # if text[-1] == " ":
+            #     self.notes_entry.setText(text.strip())
+            #     self.callsign_entry.setFocus()
+            #     self.callsign_entry.deselect()
+            # else:
+            washere = self.notes_entry.cursorPosition()
+            #cleaned = "".join(ch for ch in text if ch.isalpha()).upper()
+            #self.notes_entry.setText(self.notes_entry.text().replace(" ","_"))
+            #self.notes_entry.setCursorPosition(washere)
+
 
     @staticmethod
     def highlighted(state):
@@ -1719,24 +1837,42 @@ class MainWindow(QtWidgets.QMainWindow):
             len(self.callsign_entry.text()) == 0
             or len(self.class_entry.text()) == 0
             or len(self.section_entry.text()) == 0
+            or len(self.rstin_entry.text()) == 0
+            or len(self.rstout_entry.text()) == 0
         ):
             return
+
+
+
         if not self.cat_control:
-            self.oldfreq = int(float(self.fakefreq(self.band, self.mode)) * 1000)
+            if len(self.freq_entry.text()) == 0:
+                self.oldfreq = int(float(self.fakefreq(self.band, self.mode)) * 1000)
+                self.freq_entry.setText(self.freq / 1000)
+            else:
+                self.oldfreq = int(self.freq_entry.text()) * 1000
+
         unique_id = uuid.uuid4().hex
         contact = (
             self.callsign_entry.text(),
             self.class_entry.text(),
             self.section_entry.text(),
+
             self.oldfreq,
             self.band,
             self.mode,
             int(self.power_selector.value()),
             self.contactlookup["grid"],
             self.contactlookup["name"],
+            self.rstin_entry.text() if self.rstin_entry.text() else "599",  # Default to 599 if empty
+            self.rstout_entry.text() if self.rstout_entry.text() else "599",  # Default to 599 if empty
+            self.notes_entry.text().replace(" ","_") if self.notes_entry.text() else "_",  # Empty string if no notes
             unique_id,
         )
         self.db.log_contact(contact)
+
+        # Refresh Log Contacts Window
+        self.logwindow()
+        self.clearinputs()
 
         stale = datetime.now() + timedelta(seconds=30)
         if self.connect_to_server:
@@ -1745,6 +1881,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 "hiscall": self.callsign_entry.text(),
                 "class": self.class_entry.text(),
                 "section": self.section_entry.text(),
+                "rstin": self.rstin_entry.text() if self.rstin_entry.text() else "599",
+                "rstout": self.rstout_entry.text() if self.rstout_entry.text() else "599",
+                "note": self.notes_entry.text().replace(" ","_") if self.notes_entry.text() else "",
                 "mode": self.mode,
                 "band": self.band,
                 "frequency": self.oldfreq,
@@ -1754,6 +1893,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 "power": int(self.power_selector.value()),
                 "grid": self.contactlookup["grid"],
                 "opname": self.contactlookup["name"],
+                "rstin" : self.contactlookup["rstin"],
+                "rstout" : self.contactlookup["rstout"],
+                #"notes" : self.contactlookup["notes"],
                 "station": self.preference["mycall"],
                 "unique_id": unique_id,
                 "expire": stale.isoformat(),
@@ -1766,47 +1908,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 )
             except OSError as err:
                 logger.warning("%s", err)
-
-        if self.preference.get("send_n1mm_packets"):
-            if self.oldfreq == 0:
-                self.n1mm.contact_info["rxfreq"] = str(
-                    self.fakefreq(self.band, self.mode)
-                )
-                self.n1mm.contact_info["txfreq"] = str(
-                    self.fakefreq(self.band, self.mode)
-                )
-            else:
-                self.n1mm.contact_info["rxfreq"] = str(self.oldfreq)[:-1]
-                self.n1mm.contact_info["txfreq"] = str(self.oldfreq)[:-1]
-
-            self.n1mm.contact_info["mode"] = self.oldmode
-            if self.oldmode in ("CW", "DG"):
-                self.n1mm.contact_info["points"] = "2"
-            else:
-                self.n1mm.contact_info["points"] = "1"
-            self.n1mm.contact_info["band"] = self.n1mm.bandToUDPBand[self.band]
-            self.n1mm.contact_info["mycall"] = self.preference.get("mycall")
-            self.n1mm.contact_info["IsRunQSO"] = str(self.run_state)
-            self.n1mm.contact_info["timestamp"] = datetime.now(
-                dt.timezone.utc
-            ).strftime("%Y-%m-%d %H:%M:%S")
-            self.n1mm.contact_info["call"] = self.callsign_entry.text()
-            self.n1mm.contact_info["gridsquare"] = self.contactlookup.get("grid")
-            self.n1mm.contact_info["exchange1"] = self.class_entry.text()
-            self.n1mm.contact_info["section"] = self.section_entry.text()
-            self.n1mm.contact_info["name"] = self.contactlookup.get("name")
-            self.n1mm.contact_info["power"] = self.power_selector.value()
-            self.n1mm.contact_info["ID"] = unique_id
-            self.n1mm.send_contact_info()
-
-        self.sections()
-        self.stats()
-        self.updatemarker()
-        self.logwindow()
-        self.clearinputs()
-        self.postcloudlog()
-        self.clearcontactlookup()
-
     def stats(self):
         """
         Get an idea of how you're doing points wise.
@@ -1869,15 +1970,18 @@ class MainWindow(QtWidgets.QMainWindow):
                 band,
                 mode,
                 power,
+                grid,
+                opname,
+                rstin,
+                rstout,
+                notes,
                 _,
-                _,
-                _,
-                _,
+                _
             ) = contact
             logline = (
                 f"{str(logid).rjust(3,'0')} {hiscall.ljust(15)} {hisclass.rjust(3)} "
                 f"{hissection.rjust(3)} {the_datetime} {str(frequency).rjust(9)} "
-                f"{str(band).rjust(3)}M {mode} {str(power).rjust(3)}W"
+                f"{str(band).rjust(3)}M {mode} {str(power).rjust(3)}W {str(rstin).rjust(3)} {str(rstout).rjust(3)} {str(notes).rjust(3)} "
             )
             self.listWidget.addItem(logline)
             self.dupdict[f"{hiscall}{band}{mode}"] = True
@@ -2015,7 +2119,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Section_EC.setStyleSheet(self.worked_section("EC"))
         self.Section_NC.setStyleSheet(self.worked_section("NC"))
         self.Section_FS.setStyleSheet(self.worked_section("FS"))
- 
+
 
     def sections_col2(self):
         """display sections worked"""
@@ -2047,11 +2151,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Section_SZ.setStyleSheet(self.worked_section("SZ"))
         self.Section_TZ.setStyleSheet(self.worked_section("TZ"))
         self.Section_ZM.setStyleSheet(self.worked_section("ZM"))
-        self.Section_ZW.setStyleSheet(self.worked_section("ZW")) 
+        self.Section_ZW.setStyleSheet(self.worked_section("ZW"))
 
 #    def sections_col5(self):
 #        """display sections worked"""
-       
+
 
     def sections(self):
         """
@@ -2195,7 +2299,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 print("<EOH>", end="\r\n", file=file_descriptor)
                 for contact in log:
                     (
-                        _,
+                       _,
                         hiscall,
                         hisclass,
                         hissection,
@@ -2203,9 +2307,12 @@ class MainWindow(QtWidgets.QMainWindow):
                         freq,
                         band,
                         mode,
-                        _,
+                        power,
                         grid,
                         opname,
+                        rstin,
+                        rstout,
+                        notes,
                         _,
                         _,
                     ) = contact
@@ -2254,10 +2361,12 @@ class MainWindow(QtWidgets.QMainWindow):
                     )
                     print(f"<FREQ:{len(freq)}>{freq}", end="\r\n", file=file_descriptor)
                     print(
-                        f"<RST_SENT:{len(rst)}>{rst}", end="\r\n", file=file_descriptor
+                        # f"<RST_SENT:{len(rst)}>{rst}", end="\r\n", file=file_descriptor
+                        f"<RST_SENT:{len(rstout)}>{rstout}", end="\r\n", file=file_descriptor
                     )
                     print(
-                        f"<RST_RCVD:{len(rst)}>{rst}", end="\r\n", file=file_descriptor
+                        # f"<RST_RCVD:{len(rst)}>{rst}", end="\r\n", file=file_descriptor
+                        f"<RST_RCVD:{len(rstin)}>{rstin}", end="\r\n", file=file_descriptor
                     )
                     print(
                         "<STX_STRING:"
@@ -2323,21 +2432,39 @@ class MainWindow(QtWidgets.QMainWindow):
         contact = self.db.fetch_last_contact()
         if not contact:
             return
+        # (
+        #     _,
+        #     hiscall,
+        #     hisclass,
+        #     hissection,
+        #     the_datetime,
+        #     freq,
+        #     band,
+        #     mode,
+        #     _,
+        #     grid,
+        #     opname,
+        #     _,
+        #     _,
+        # ) = contact
         (
-            _,
-            hiscall,
-            hisclass,
-            hissection,
-            the_datetime,
-            freq,
-            band,
-            mode,
-            _,
-            grid,
-            opname,
-            _,
-            _,
-        ) = contact
+                _,
+                hiscall,
+                hisclass,
+                hissection,
+                the_datetime,
+                freq,
+                band,
+                mode,
+                _,
+                grid,
+                opname,
+                rstin,
+                rstout,
+                _,
+                _,
+                _
+            ) = contact
         if mode == "DI":
             mode = "FT8"
         if mode == "PH":
@@ -2401,7 +2528,14 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         Generates a cabrillo log file.
         """
-        filename = self.preference["mycall"].upper() + ".log"
+        # get current date and time
+        current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+        print("Current date & time : ", current_datetime)
+
+        # convert datetime obj to string
+        str_current_datetime = str(current_datetime)
+
+        filename = self.preference["mycall"].upper() + " " + str_current_datetime + ".log"
         self.infobox.setTextColor(QtGui.QColor(211, 215, 207))
         self.infobox.insertPlainText(f"Saving cabrillo to: {filename}\n")
         app.processEvents()
@@ -2468,9 +2602,12 @@ class MainWindow(QtWidgets.QMainWindow):
                         freq,
                         band,
                         mode,
-                        _,
-                        _,
-                        _,
+                        power,
+                        grid,
+                        opname,
+                        rstin,
+                        rstout,
+                        notes,
                         _,
                         _,
                     ) = contact
@@ -2489,7 +2626,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         f"QSO: {freq.rjust(6)} {mode} {loggeddate} {loggedtime} "
                         f"{self.preference['mycall']} {self.preference['myclass']} "
                         f"{self.preference['mysection']} {hiscall} "
-                        f"{hisclass} {hissection}",
+                        f"{hisclass} {hissection} {power} {rstin} {rstout} {grid} '{opname}' {notes}",
                         end="\r\n",
                         file=file_descriptor,
                     )
@@ -2543,6 +2680,7 @@ class EditQSODialog(QtWidgets.QDialog):
         self.change = QsoEdit()
         self.unique_id = None
 
+
     def set_up(self, linetopass, thedatabase):
         """Set up variables"""
         (
@@ -2556,6 +2694,9 @@ class EditQSODialog(QtWidgets.QDialog):
             theband,
             themode,
             thepower,
+            rstin,
+            rstout,
+            notes
         ) = linetopass.split()
         self.editCallsign.setText(thecall)
         self.editClass.setText(theclass)
@@ -2564,14 +2705,34 @@ class EditQSODialog(QtWidgets.QDialog):
         self.editBand.setCurrentIndex(self.editBand.findText(theband.replace("M", "")))
         self.editMode.setCurrentIndex(self.editMode.findText(themode))
         self.editPower.setValue(int(thepower[: len(thepower) - 1]))
+        self.editRstIn.setText(rstin)
+        self.editRstOut.setText(rstout)
+        self.editNotes.setText(notes.replace("_"," "))
+        # Get the RST and notes values from the database
+        #contact_info = self.database.contact_by_id(self.theitem)
+        # if contact_info and len(contact_info) > 0:
+        #     _, _, _, _, rstin, rstout, note, _, _, _, _, _, _, _, _, _ = contact_info[0]
+        #     if hasattr(self, 'editRSTin'):
+        #         self.editRSTin.setText(rstin)
+        #     if hasattr(self, 'editRSTout'):
+        #         self.editRSTout.setText(rstout)
+        #     if hasattr(self, 'editNotes'):
+        #         self.editNotes.setText(note)
+
         date_time = thedate + " " + thetime
         now = QtCore.QDateTime.fromString(date_time, "yyyy-MM-dd hh:mm:ss")
         self.editDateTime.setDateTime(now)
         self.database = thedatabase
         self.unique_id = self.database.get_unique_id(self.theitem)
 
+
+
     def save_changes(self):
         """Save update to db"""
+        #rstin = self.editRSTin.text() if hasattr(self, 'editRSTin') else ""
+        #rstout = self.editRSTout.text() if hasattr(self, 'editRSTout') else ""
+        #notes = self.editNotes.text() if hasattr(self, 'editNotes') else ""
+
         qso = [
             self.editCallsign.text().upper(),
             self.editClass.text().upper(),
@@ -2580,10 +2741,15 @@ class EditQSODialog(QtWidgets.QDialog):
             self.editBand.currentText(),
             self.editMode.currentText().upper(),
             self.editPower.value(),
-            self.editFreq.text(),
-            self.theitem,
+            self.editFreq.text(), # 7
+            self.editRstIn.text().replace(" ",""), # 8
+            self.editRstOut.text().replace(" ",""), # 9
+            self.editNotes.toPlainText().rstrip().replace(" ","_").replace("\n",",_"), # 10
+            self.theitem, # 11
         ]
+
         self.database.change_contact(qso)
+
         if window.connect_to_server:
             stale = datetime.now() + timedelta(seconds=30)
             command = {"cmd": "UPDATE"}

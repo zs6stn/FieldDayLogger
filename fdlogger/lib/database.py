@@ -1,3 +1,4 @@
+#fdlogger/lib/database.py
 """Database class to store contacts"""
 
 import logging
@@ -48,6 +49,9 @@ class DataBase:
                     "power INTEGER NOT NULL, "
                     "grid text NOT NULL, "
                     "opname text NOT NULL, "
+                    "rstin text NOT NULL, "
+                    "rstout text NOT NULL, "
+                    "note text NOT NULL, "
                     "unique_id text NOT NULL, "
                     "dirty INTEGER DEFAULT 1);"
                 )
@@ -71,15 +75,15 @@ class DataBase:
     def log_contact(self, logme: tuple) -> None:
         """
         Inserts a contact into the db.
-        pass in (hiscall, hisclass, hissection, band, mode, int(power), grid, name)
+        pass in (hiscall, hisclass, hissection, band, mode, int(power), grid, name, rstin, rstout, note)
         """
         try:
             with sqlite3.connect(self.database) as conn:
                 sql = (
                     "INSERT INTO contacts"
                     "(callsign, class, section, date_time, frequency, "
-                    "band, mode, power, grid, opname, unique_id, dirty) "
-                    "VALUES(?,?,?,datetime('now'),?,?,?,?,?,?,?,1)"
+                    "band, mode, power, grid, opname, rstin, rstout, note, unique_id, dirty) "
+                    "VALUES(?,?,?,datetime('now'),?,?,?,?,?,?,?,?,?,?,1)"
                 )
                 cur = conn.cursor()
                 cur.execute(sql, logme)
@@ -90,15 +94,15 @@ class DataBase:
     def log_ft8_contact(self, logme: tuple) -> None:
         """
         Inserts a contact into the db.
-        pass in (hiscall, hisclass, hissection, band, mode, int(power), grid, name)
+        pass in (hiscall, hisclass, hissection, date_time, frequency, band, mode, int(power), grid, name, rstin, rstout, note)
         """
         try:
             with sqlite3.connect(self.database) as conn:
                 sql = (
                     "INSERT INTO contacts"
                     "(callsign, class, section, date_time, frequency, "
-                    "band, mode, power, grid, opname, unique_id, dirty) "
-                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,1)"
+                    "band, mode, power, grid, opname, rstin, rstout, note, unique_id, dirty) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)"
                 )
                 cur = conn.cursor()
                 cur.execute(sql, logme)
@@ -139,8 +143,9 @@ class DataBase:
                 sql = (
                     f"update contacts set callsign = '{qso[0]}', class = '{qso[1]}', "
                     f"section = '{qso[2]}', date_time = '{qso[3]}', band = '{qso[4]}', "
-                    f"mode = '{qso[5]}', power = '{qso[6]}', frequency = '{qso[7]}' "
-                    f"where id='{qso[8]}';"
+                    f"mode = '{qso[5]}', power = '{qso[6]}', frequency = '{qso[7]}', "
+                    f"rstin = '{qso[8]}', rstout = '{qso[9]}', note = '{qso[10]}' "
+                    f"where id='{qso[11]}';"
                 )
                 cur = conn.cursor()
                 cur.execute(sql)

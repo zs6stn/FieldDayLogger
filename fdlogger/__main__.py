@@ -1878,12 +1878,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.connect_to_server:
             contact = {
                 "cmd": "POST",
-                "hiscall": self.callsign_entry.text(),
-                "class": self.class_entry.text(),
-                "section": self.section_entry.text(),
-                "rstin": self.rstin_entry.text() if self.rstin_entry.text() else "599",
-                "rstout": self.rstout_entry.text() if self.rstout_entry.text() else "599",
-                "note": self.notes_entry.text().replace(" ","_") if self.notes_entry.text() else "",
+                "hiscall": contact[0], # self.callsign_entry.text(),
+                "class": contact[1], # self.class_entry.text(),
+                "section": contact[2], # self.section_entry.text(),
+                "rstin": contact[9], # self.rstin_entry.text() if self.rstin_entry.text() else "599",
+                "rstout": contact[10], # self.rstout_entry.text() if self.rstout_entry.text() else "599",
+                "note": "", # self.notes_entry.text().replace(" ","_") if self.notes_entry.text() else """",
                 "mode": self.mode,
                 "band": self.band,
                 "frequency": self.oldfreq,
@@ -1893,8 +1893,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 "power": int(self.power_selector.value()),
                 "grid": self.contactlookup["grid"],
                 "opname": self.contactlookup["name"],
-                "rstin" : self.contactlookup["rstin"],
-                "rstout" : self.contactlookup["rstout"],
+                # "rstin" : self.contactlookup["rstin"],
+                # "rstout" : self.contactlookup["rstout"],
                 #"notes" : self.contactlookup["notes"],
                 "station": self.preference["mycall"],
                 "unique_id": unique_id,
@@ -1981,7 +1981,7 @@ class MainWindow(QtWidgets.QMainWindow):
             logline = (
                 f"{str(logid).rjust(3,'0')} {hiscall.ljust(15)} {hisclass.rjust(3)} "
                 f"{hissection.rjust(3)} {the_datetime} {str(frequency).rjust(9)} "
-                f"{str(band).rjust(3)}M {mode} {str(power).rjust(3)}W {str(rstin).rjust(3)} {str(rstout).rjust(3)} {str(notes).rjust(3)} "
+                f"{str(band).rjust(3)}M {mode} {str(power).rjust(3)}W {str(rstin).rjust(3)} {str(rstout).rjust(3)} {str(notes)} "
             )
             self.listWidget.addItem(logline)
             self.dupdict[f"{hiscall}{band}{mode}"] = True

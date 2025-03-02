@@ -634,6 +634,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 f"{self.contactlookup.get('nickname') if self.contactlookup.get('nickname') else self.contactlookup.get('name')}"
                 f" {self.contactlookup.get('grid')}"
             )
+            self.infobox.insertPlainText(f"{self.contactlookup["call"]}: {self.contactlookup["name"]} {"(" + self.contactlookup.get('nickname') + ")" if self.contactlookup.get('nickname') else "" }\n")
 
     def distance(self, grid1: str, grid2: str) -> float:
         """
@@ -2078,7 +2079,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.infobox.clear()
         log = self.db.dup_check(acall)
         for contact in log:
-            self.infobox.insertPlainText(f"{contact[0]}: {'Mark Walker'}\n")
             hiscall, hisclass, hissection, hisband, hismode = contact
             if len(self.class_entry.text()) == 0:
                 self.class_entry.setText(hisclass)

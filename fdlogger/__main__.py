@@ -2907,7 +2907,7 @@ working_path = os.path.dirname(__loader__.get_filename())
 font_path = working_path + "/data"
 families = load_fonts_from_dir(os.fspath(font_path))
 window = MainWindow()
-window.setWindowTitle(f"K6GTE Field Day Logger v{__version__}")
+window.setWindowTitle(f"K6GTE Field Day Logger v{__version__} (ZS6STN)")
 window.show()
 window.read_cw_macros()
 window.changeband()

@@ -2078,6 +2078,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.infobox.clear()
         log = self.db.dup_check(acall)
         for contact in log:
+            self.infobox.insertPlainText(f"{contact[0]}: {'Mark Walker'}\n")
             hiscall, hisclass, hissection, hisband, hismode = contact
             if len(self.class_entry.text()) == 0:
                 self.class_entry.setText(hisclass)

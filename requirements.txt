@@ -1,0 +1,4 @@
+dicttoxml
+xmltodict
+PyQt5
+requires

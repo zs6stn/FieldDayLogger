@@ -634,6 +634,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 f"{self.contactlookup.get('nickname') if self.contactlookup.get('nickname') else self.contactlookup.get('name')}"
                 f" {self.contactlookup.get('grid')}"
             )
+            # Display the name of the callsign looked up in the info window, and nickname if it's available
+            self.infobox.setTextColor(QtGui.QColor(211, 215, 207))
             self.infobox.insertPlainText(f"{self.contactlookup["call"]}: {self.contactlookup["name"]} {"(" + self.contactlookup.get('nickname') + ")" if self.contactlookup.get('nickname') else "" }\n")
 
     def distance(self, grid1: str, grid2: str) -> float:

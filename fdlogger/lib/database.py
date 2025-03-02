@@ -68,6 +68,7 @@ class DataBase:
                 )
                 cursor.execute(sql_table)
                 conn.commit()
+
         except sqlite3.Error as exception:
             self.logger.critical("%s", exception)
 

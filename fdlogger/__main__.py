@@ -435,6 +435,7 @@ class MainWindow(QtWidgets.QMainWindow):
         packet = {"cmd": "CHAT"}
         packet["sender"] = self.preference.get("mycall", "")
         packet["message"] = message
+        self.db.log_chat((datetime.now().strftime("%Y-%m-%d %H-%M-%S"), f"{packet["sender"]}: {message}"))
         bytesToSend = bytes(dumps(packet), encoding="ascii")
         try:
             self.server_udp.sendto(
@@ -451,6 +452,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chatlog.insertPlainText(f"\n{sender}: {body}")
         self.chatlog.setTextColor(QtGui.QColor(211, 215, 207))
         self.chatlog.ensureCursorVisible()
+        self.db.log_chat((datetime.now().strftime("%Y-%m-%d %H-%M-%S"), f"{sender}: {body}"))
 
     def watch_udp(self):
         """Puts UDP datagrams in a FIFO queue"""

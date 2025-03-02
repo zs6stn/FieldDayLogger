@@ -273,7 +273,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.udp_socket = QUdpSocket()
         self.udp_socket.bind(QHostAddress.LocalHost, 2237)
         self.udp_socket.readyRead.connect(self.on_udp_socket_ready_read)
-        
+
     def get_opon(self) -> None:
         """
         Ctrl+O Open the OPON dialog.
@@ -638,7 +638,10 @@ class MainWindow(QtWidgets.QMainWindow):
             )
             # Display the name of the callsign looked up in the info window, and nickname if it's available
             self.infobox.setTextColor(QtGui.QColor(211, 215, 207))
-            self.infobox.insertPlainText(f"{self.contactlookup["call"]}: {self.contactlookup["name"]} {"(" + self.contactlookup.get('nickname') + ")" if self.contactlookup.get('nickname') else "" }\n")
+            if self.contactlookup["name"] != False:
+                self.infobox.insertPlainText(f"{self.contactlookup["call"]}: {self.contactlookup["name"]} {"(" + self.contactlookup.get('nickname') + ")" if self.contactlookup.get('nickname') else "" }\n")
+            else:
+                self.infobox.insertPlainText(f"{self.contactlookup["call"]}: Not Found!\n")
 
     def distance(self, grid1: str, grid2: str) -> float:
         """
@@ -1422,7 +1425,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def changeband(self):
         """change band"""
-        
+
         if self.band != self.band_selector.currentText():
             self.band = self.band_selector.currentText()
             if self.cat_control is not None:
@@ -1434,7 +1437,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(self.freq_entry.text()) == 0:
             print(self.freq_entry.text())
         self.freq_entry.setText(str(int(float(self.fakefreq(self.band, self.mode)))))
-        
+
     def changemode(self):
         """change mode"""
         if self.mode != self.mode_selector.currentText():

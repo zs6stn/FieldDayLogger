@@ -435,7 +435,7 @@ class MainWindow(QtWidgets.QMainWindow):
         packet = {"cmd": "CHAT"}
         packet["sender"] = self.preference.get("mycall", "")
         packet["message"] = message
-        self.db.log_chat((datetime.now().strftime("%Y-%m-%d %H-%M-%S"), f"{packet["sender"]}: {message}"))
+        # self.db.log_chat((datetime.now().strftime("%Y-%m-%d %H-%M-%S"), f"{packet["sender"]}: {message}"))
         bytesToSend = bytes(dumps(packet), encoding="ascii")
         try:
             self.server_udp.sendto(

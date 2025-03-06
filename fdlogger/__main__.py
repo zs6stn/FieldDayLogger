@@ -1910,7 +1910,7 @@ class MainWindow(QtWidgets.QMainWindow):
             }
             self.server_commands.append(contact)
             bytesToSend = bytes(dumps(contact), encoding="ascii")
-            try:
+            try: 
                 self.server_udp.sendto(
                     bytesToSend, (self.multicast_group, int(self.multicast_port))
                 )

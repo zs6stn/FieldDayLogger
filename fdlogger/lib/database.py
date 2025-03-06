@@ -96,7 +96,7 @@ class DataBase:
                     "(callsign, class, section, date_time, frequency, "
                     "band, mode, power, grid, opname, rstin, rstout, note, unique_id, dirty) "
                     "VALUES(?,?,?,datetime('now'),?,?,?,?,?,?,?,?,?,?,1)"
-                )
+                ) 
                 cur = conn.cursor()
                 cur.execute(sql, logme)
                 conn.commit()

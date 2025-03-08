@@ -2690,6 +2690,10 @@ class EditQSODialog(QtWidgets.QDialog):
 
 
     def set_up(self, linetopass, thedatabase):
+
+        if (len(linetopass.split()) == 12):
+            linetopass = linetopass + " _"
+
         """Set up variables"""
         (
             self.theitem,
@@ -2740,6 +2744,8 @@ class EditQSODialog(QtWidgets.QDialog):
         #rstin = self.editRSTin.text() if hasattr(self, 'editRSTin') else ""
         #rstout = self.editRSTout.text() if hasattr(self, 'editRSTout') else ""
         #notes = self.editNotes.text() if hasattr(self, 'editNotes') else ""
+        if self.editNotes.toPlainText().rstrip() == "":
+            self.editNotes.setText("_")
 
         qso = [
             self.editCallsign.text().upper(),

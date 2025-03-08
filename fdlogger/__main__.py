@@ -47,6 +47,8 @@ try:
     from fdlogger.lib.n1mm import N1MM
     from fdlogger.lib.edit_opon import OpOn
     from fdlogger.lib.version import __version__
+    from fdlogger.lib.constants import *
+
 except ModuleNotFoundError:
     from lib.lookup import HamDBlookup, HamQTH, QRZlookup
     from lib.cat_interface import CAT
@@ -56,7 +58,6 @@ except ModuleNotFoundError:
     from lib.n1mm import N1MM
     from lib.edit_opon import OpOn
     from lib.version import __version__
-
 
 def load_fonts_from_dir(directory: str) -> set:
     """
@@ -366,7 +367,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if records:
                 for count, dirty_contact in enumerate(records):
                     contact = {}
-                    contact["cmd"] = "POST"
+                    contact["cmd"] = CMD.POST()
                     contact["station"] = self.preference.get("mycall")
                     stale = datetime.now() + timedelta(seconds=30)
                     contact["expire"] = stale.isoformat()
@@ -432,7 +433,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def send_chat(self):
         """Sends UDP chat packet with text entered in chat_entry field."""
         message = self.chat_entry.text()
-        packet = {"cmd": "CHAT"}
+        packet = {"cmd": CMD.CHAT()}
         packet["sender"] = self.preference.get("mycall", "")
         packet["message"] = message
         # self.db.log_chat((datetime.now().strftime("%Y-%m-%d %H-%M-%S"), f"{packet["sender"]}: {message}"))
@@ -489,7 +490,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 continue
             logger.info("%s", json_data)
 
-            if json_data.get("cmd") == "PING":
+            if json_data.get("cmd") == CMD.PING(): #"PING":
                 if json_data.get("station"):
                     band_mode = f"{json_data.get('band')} {json_data.get('mode')}"
                     if self.people.get(json_data.get("station")) != band_mode:
@@ -500,7 +501,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.group_call_indicator.setStyleSheet("border: 1px solid green;")
                 continue
 
-            if json_data.get("cmd") == "RESPONSE":
+            if json_data.get("cmd") == CMD.RESPONSE(): # "RESPONSE":
                 if json_data.get("recipient") == self.preference.get("mycall"):
                     if json_data.get("subject") == "HOSTINFO":
                         self.groupcall = json_data.get("groupcall", "")
@@ -532,18 +533,18 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.remove_confirmed_commands(json_data)
                     continue
 
-            if json_data.get("cmd") == "CHAT":
+            if json_data.get("cmd") == CMD.CHAT(): # "CHAT":
                 self.display_chat(json_data.get("sender"), json_data.get("message"))
                 continue
 
-            if json_data.get("cmd") == "GROUPQUERY":
+            if json_data.get("cmd") == CMD.GROUPQUERY(): # "GROUPQUERY":
                 if self.groupcall:
                     self.send_status_udp()
 
     def query_group(self):
         """Sends request to server asking for group call/class/section."""
         update = {
-            "cmd": "GROUPQUERY",
+            "cmd": CMD.GROUPQUERY(), #"GROUPQUERY",
             "station": self.preference.get("mycall", ""),
         }
         bytesToSend = bytes(dumps(update), encoding="ascii")
@@ -586,7 +587,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 return
 
             update = {
-                "cmd": "PING",
+                "cmd": CMD.PING(), #"PING",
                 "mode": self.mode,
                 "band": self.band,
                 "station": self.preference["mycall"],
@@ -1885,7 +1886,7 @@ class MainWindow(QtWidgets.QMainWindow):
         stale = datetime.now() + timedelta(seconds=30)
         if self.connect_to_server:
             contact = {
-                "cmd": "POST",
+                "cmd": CMD.POST(), # "POST",
                 "hiscall": contact[0], # self.callsign_entry.text(),
                 "class": contact[1], # self.class_entry.text(),
                 "section": contact[2], # self.section_entry.text(),
@@ -2659,7 +2660,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.adif()
         if self.connect_to_server:
             update = {
-                "cmd": "LOG",
+                "cmd": CMD.LOG(), # "LOG",
                 "station": self.preference.get("mycall", ""),
             }
             bytesToSend = bytes(dumps(update), encoding="ascii")
